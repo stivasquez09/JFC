@@ -68,11 +68,14 @@ Este comando generará una salida con credenciales que **deben mantenerse privad
 
 ```json
 {
-  "appId": "xxxxxx-xxx-xxxx-xxxx-xxxxxxxxxx",
-  "displayName": "azure-cli-2022-xxxx",
-  "password": "xxxxxx~xxxxxx~xxxxx",
-  "tenant": "xxxxx-xxxx-xxxxx-xxxx-xxxxx"
+{
+  "clientId": "xxxxx-xxxxx3-xxxxxx-xxxxxx",
+  "clientSecret": "xxxxxxxxxxx.xxxxxxxxxxx",
+  "subscriptionId": "xxxxxxx-xxxxxxxxx--xxxxxxx-x",
+  "tenantId": "xxxxxxx-xxxxxxxx-xxxxxxx-xxxxxx",
+
 }
+
 ```
 
 #### Establecer variables de entorno
@@ -96,28 +99,7 @@ $env:ARM_CLIENT_SECRET="<SERVICE_PRINCIPAL_PASSWORD>"
 $env:ARM_SUBSCRIPTION_ID="<SUBSCRIPTION_ID>"
 $env:ARM_TENANT_ID="<TENANT_ID>"
 ```
-
----
-
-### 2. Configurar tu cuenta de almacenamiento
-
-Azure Storage proporciona un espacio único para almacenar objetos como blobs.
-
-Estructura general:
-
-```bash
-Cuenta de almacenamiento
-        ├── Contenedor_1/
-        │   ├── Blob_1_1/
-        │   └── Blob_1_2/
-        │
-        └── Contenedor_2/
-            ├── Blob_2_1/
-            └── Blob_2_2/
-```
-
-El archivo Terraform se encargará de crear esta estructura por ti.
-
+Nota estos valores seran anexados al Repositorio de GitHub Actions en el apartado de secrets para ser invocados en el workflows
 ---
 
 ### 3. Inicializar el entorno de trabajo
@@ -126,52 +108,6 @@ Ejecuta el siguiente comando para inicializar el directorio de trabajo:
 
 ```bash
 terraform init
-```
-
----
-
-### 4. Configurar los nombres del Storage Account y del Contenedor
-
-Los valores predeterminados se encuentran definidos como variables en el archivo `vars.tf`:
-
-* `storage_account_name`
-* `container_name`
-
-Puedes modificarlos de las siguientes formas:
-
-#### Opción A: Desde la línea de comandos
-
-```bash
-terraform plan -var 'storage_account_name=<TU_STORAGE_ACCOUNT>' -var 'container_name=<TU_CONTAINER>'
-terraform apply -var 'storage_account_name=<TU_STORAGE_ACCOUNT>' -var 'container_name=<TU_CONTAINER>'
-```
-
-#### Opción B: Desde un archivo `terraform.tfvars`
-
-```hcl
-storage_account_name = "<TU_STORAGE_ACCOUNT>"
-container_name       = "<TU_CONTAINER>"
-```
-
-#### Opción C: Con variables de entorno
-
-```bash
-export TF_VAR_storage_account_name="<TU_STORAGE_ACCOUNT>"
-export TF_VAR_container_name="<TU_CONTAINER>"
-```
-
-#### Opción D: Cambiar valores por defecto en `vars.tf`
-
-```hcl
-variable "storage_account_name" {
-  description = "Nombre único del Storage Account (3-24 caracteres, solo letras minúsculas y números)."
-  default     = "<TU_STORAGE_ACCOUNT>"
-}
-
-variable "container_name" {
-  description = "Nombre del contenedor Blob."
-  default     = "<TU_CONTAINER>"
-}
 ```
 
 ---
@@ -200,8 +136,8 @@ terraform apply
 
 Después de aplicar la configuración, en el portal de Azure deberías ver:
 
-* El nuevo **Storage Account**.
-* El contenedor **Blob** creado dentro del Storage Account.
+* El nuevo Resource Group.
+
 
 ---
 
