@@ -1,227 +1,214 @@
-# Terraform Create Blob Storage example
+# Infraestructura Escalable y Alta Disponibilidad con Terraform en Azure
 
-This folder contains the create Blob Storage example of a [Terraform](https://www.terraform.io/) file on Microsoft Azure.
+Este repositorio contiene un archivo Terraform que crea un contenedor de **Blob Storage** en Microsoft Azure, aprovisionando toda la infraestructura necesaria.
 
-This Terraform file create a Blob Storage container on Microsoft Azure by provisioning the necessary infrastructure.
+## 📚 Documentación
 
-## Requirements
+Consulta la documentación oficial de [Terraform](https://www.terraform.io/) para obtener más información sobre cómo utilizar esta herramienta con **Microsoft Azure**.
 
-* You must have a [Microsoft Azure](https://azure.microsoft.com/) subscription.
+---
 
-* You must have the following installed:
-  * [Terraform](https://www.terraform.io/) CLI
-  * Azure CLI tool
+## ✅ Pre-requisitos
 
-* The code was written for:
-  * Terraform 0.14 or later
+Antes de comenzar, asegúrate de tener lo siguiente:
 
-* It uses the Terraform AzureRM Provider v 3.1 that interacts with the many resources supported by Azure Resource Manager (AzureRM) through its APIs.
+* Una cuenta o suscripción activa en [Microsoft Azure](https://azure.microsoft.com/).
+* Descargar e instalar los siguientes ejecutables:
 
-## Using the code
+  * [Terraform](https://www.terraform.io/)
+  * [Azure CLI](https://learn.microsoft.com/es-es/cli/azure/install-azure-cli-windows?view=azure-cli-latest&pivots=msi)
+* Este código está escrito para utilizar **Terraform versión 3.0.0 o superior**.
 
-* Configure your access to Azure.
+---
 
-  * Authenticate using the Azure CLI.
+## 🚀 Uso del código
 
-    Terraform must authenticate to Azure to create infrastructure.
+### 1. Configurar el acceso a Azure
 
-    In your terminal, use the Azure CLI tool to setup your account permissions locally.
+#### Autenticarse con Azure CLI
 
-    ```bash
-    az login  
-    ```
+Terraform necesita autenticarse con Azure para poder crear la infraestructura. Desde tu terminal, ejecuta el siguiente comando para iniciar sesión:
 
-    Your browser will open and prompt you to enter your Azure login credentials. After successful authentication, your terminal will display your subscription information.
+```bash
+az login  
+```
 
-    You have logged in. Now let us find all the subscriptions to which you have access...
+Esto abrirá tu navegador para que ingreses tus credenciales de Azure. Una vez autenticado, se mostrará la información de tu suscripción en la terminal:
 
-    ```bash
-    [
-      {
-        "cloudName": "<CLOUD-NAME>",
-        "homeTenantId": "<HOME-TENANT-ID>",
-        "id": "<SUBSCRIPTION-ID>",
-        "isDefault": true,
-        "managedByTenants": [],
-        "name": "<SUBSCRIPTION-NAME>",
-        "state": "Enabled",
-        "tenantId": "<TENANT-ID>",
-        "user": {
-          "name": "<YOUR-USERNAME@DOMAIN.COM>",
-          "type": "user"
-        }
-      }
-    ]
-    ```
+```json
+[
+  {
+    "cloudName": "<CLOUD-NAME>",
+    "homeTenantId": "<HOME-TENANT-ID>",
+    "id": "<SUBSCRIPTION-ID>",
+    "isDefault": true,
+    "name": "<SUBSCRIPTION-NAME>",
+    ...
+  }
+]
+```
 
-    Find the `id` column for the subscription account you want to use.
+Identifica el valor de `id` correspondiente a la suscripción que deseas usar y establécelo con el siguiente comando:
 
-    Once you have chosen the account subscription ID, set the account with the Azure CLI.
+```bash
+az account set --subscription "<SUBSCRIPTION-ID>"
+```
 
-    ```bash
-    az account set --subscription "<SUBSCRIPTION-ID>"
-    ```
+#### Crear un Service Principal
 
-  * Create a Service Principal.
+Un **Service Principal** es una entidad que permite a Terraform autenticarse y ejecutar acciones en tu nombre.
 
-    A Service Principal is an application within Azure Active Directory with the authentication tokens Terraform needs to perform actions on your behalf. Update the `<SUBSCRIPTION_ID>` with the subscription ID you specified in the previous step.
+Ejecuta el siguiente comando (reemplazando `<SUBSCRIPTION_ID>`) para crear uno:
 
-    Create a Service Principal:
+```bash
+az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<SUBSCRIPTION_ID>"
+```
 
-    ```bash
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<SUBSCRIPTION_ID>"
+Este comando generará una salida con credenciales que **deben mantenerse privadas**:
 
-    Creating 'Contributor' role assignment under scope '/subscriptions/<SUBSCRIPTION_ID>'
-    The output includes credentials that you must protect. Be sure that you do not include these credentials in your code or check the credentials into your source control. For more information, see https://aka.ms/azadsp-cli
-    {
-      "appId": "xxxxxx-xxx-xxxx-xxxx-xxxxxxxxxx",
-      "displayName": "azure-cli-2022-xxxx",
-      "password": "xxxxxx~xxxxxx~xxxxx",
-      "tenant": "xxxxx-xxxx-xxxxx-xxxx-xxxxx"
-    }
-    ```
+```json
+{
+  "appId": "xxxxxx-xxx-xxxx-xxxx-xxxxxxxxxx",
+  "displayName": "azure-cli-2022-xxxx",
+  "password": "xxxxxx~xxxxxx~xxxxx",
+  "tenant": "xxxxx-xxxx-xxxxx-xxxx-xxxxx"
+}
+```
 
-  * Set your environment variables.
+#### Establecer variables de entorno
 
-    HashiCorp recommends setting these values as environment variables rather than saving them in your Terraform configuration.
+Es recomendable usar variables de entorno para configurar las credenciales:
 
-    In your terminal, set the following environment variables. Be sure to update the variable values with the values Azure returned in the previous command.
+**Para MacOS/Linux:**
 
-    * For MacOS/Linux:
+```bash
+export ARM_CLIENT_ID="<SERVICE_PRINCIPAL_APPID>"
+export ARM_CLIENT_SECRET="<SERVICE_PRINCIPAL_PASSWORD>"
+export ARM_SUBSCRIPTION_ID="<SUBSCRIPTION_ID>"
+export ARM_TENANT_ID="<TENANT_ID>"
+```
 
-      ```bash
-      export ARM_CLIENT_ID="<SERVICE_PRINCIPAL_APPID>"
-      export ARM_CLIENT_SECRET="<SERVICE_PRINCIPAL_PASSWORD>"
-      export ARM_SUBSCRIPTION_ID="<SUBSCRIPTION_ID>"
-      export ARM_TENANT_ID="<TENANT_ID>"
-      ```
+**Para Windows (PowerShell):**
 
-    * For Windows (PowerShell):
+```bash
+$env:ARM_CLIENT_ID="<SERVICE_PRINCIPAL_APPID>"
+$env:ARM_CLIENT_SECRET="<SERVICE_PRINCIPAL_PASSWORD>"
+$env:ARM_SUBSCRIPTION_ID="<SUBSCRIPTION_ID>"
+$env:ARM_TENANT_ID="<TENANT_ID>"
+```
 
-      ```bash
-      $env:ARM_CLIENT_ID="<SERVICE_PRINCIPAL_APPID>"
-      $env:ARM_CLIENT_SECRET="<SERVICE_PRINCIPAL_PASSWORD>"
-      $env:ARM_SUBSCRIPTION_ID="<SUBSCRIPTION_ID>"
-      $env:ARM_TENANT_ID="<TENANT_ID>"
-      ```
+---
 
-* Configure your storage account.
+### 2. Configurar tu cuenta de almacenamiento
 
-  An Azure storage account provides a unique namespace to store and access your Azure Storage data objects.
+Azure Storage proporciona un espacio único para almacenar objetos como blobs.
 
-  An storage account can content containers and every container can content blobs.
+Estructura general:
 
-  ```bash
-  Storage Account
-              ├── Container_1/
-              │   ├── Blob_1_1/
-              │   └── Blob_1_2/
-              │
-              └── Container_2/
-                  ├── Blob_2_1/
-                  ├── Blob_2_2/
-                  └── Blob_2_3/
-  ```
+```bash
+Cuenta de almacenamiento
+        ├── Contenedor_1/
+        │   ├── Blob_1_1/
+        │   └── Blob_1_2/
+        │
+        └── Contenedor_2/
+            ├── Blob_2_1/
+            └── Blob_2_2/
+```
 
-  The terraform file creates your storage account.
+El archivo Terraform se encargará de crear esta estructura por ti.
 
-* Initialize working directory.
+---
 
-  The first command that should be run after writing a new Terraform configuration is the `terraform init` command in order to initialize a working directory containing Terraform configuration files. It is safe to run this command multiple times.
+### 3. Inicializar el entorno de trabajo
 
-  ```bash
-  terraform init
-  ```
+Ejecuta el siguiente comando para inicializar el directorio de trabajo:
 
-* Configure Storage Account and container names.
+```bash
+terraform init
+```
 
-  The default names of storage account and container are defined as two input variables in `vars.tf` file:
+---
 
-  * `storage_account_name`
-  * `container_name`
+### 4. Configurar los nombres del Storage Account y del Contenedor
 
-  If you want to modify both you will be able to do it in several ways, but be sure to replace the value of `<YOUR_STORAGE_ACCOUNT_NAME>` by your storage account name, and the value of `<YOUR_CONTAINER_NAME>` by your container name:
+Los valores predeterminados se encuentran definidos como variables en el archivo `vars.tf`:
 
-  * Loading variables from command line option.
+* `storage_account_name`
+* `container_name`
 
-    Run Terraform commands in this way:
+Puedes modificarlos de las siguientes formas:
 
-    ```bash
-    terraform plan -var 'storage_account_name=<YOUR_STORAGE_ACCOUNT_NAME>' -var 'container_name=<YOUR_CONTAINER_NAME>'
-    ```
+#### Opción A: Desde la línea de comandos
 
-    ```bash
-    terraform apply -var 'storage_account_name=<YOUR_STORAGE_ACCOUNT_NAME>' -var 'container_name=<YOUR_CONTAINER_NAME>'
-    ```
+```bash
+terraform plan -var 'storage_account_name=<TU_STORAGE_ACCOUNT>' -var 'container_name=<TU_CONTAINER>'
+terraform apply -var 'storage_account_name=<TU_STORAGE_ACCOUNT>' -var 'container_name=<TU_CONTAINER>'
+```
 
-  * Loading variables from a file.
+#### Opción B: Desde un archivo `terraform.tfvars`
 
-    When Terraform runs it will look for a file called `terraform.tfvars`. You can populate this file with variable values that will be loaded when Terraform runs. An example for the content of the `terraform.tfvars` file:
+```hcl
+storage_account_name = "<TU_STORAGE_ACCOUNT>"
+container_name       = "<TU_CONTAINER>"
+```
 
-    ```bash
-    storage_account_name="<YOUR_STORAGE_ACCOUNT_NAME>"
-    container_name="<YOUR_CONTAINER_NAME>"
-    ```
+#### Opción C: Con variables de entorno
 
-  * Loading variables from environment variables.
+```bash
+export TF_VAR_storage_account_name="<TU_STORAGE_ACCOUNT>"
+export TF_VAR_container_name="<TU_CONTAINER>"
+```
 
-    Terraform will also parse any environment variables that are prefixed with `TF_VAR`. You can create environment variables `TF_VAR_storage_account_name` and `TF_VAR_container_name`:
+#### Opción D: Cambiar valores por defecto en `vars.tf`
 
-    ```bash
-    export TF_VAR_storage_account_name=<YOUR_STORAGE_ACCOUNT_NAME>
-    export TF_VAR_container_name=<YOUR_CONTAINER_NAME>
-    ```
+```hcl
+variable "storage_account_name" {
+  description = "Nombre único del Storage Account (3-24 caracteres, solo letras minúsculas y números)."
+  default     = "<TU_STORAGE_ACCOUNT>"
+}
 
-  * Variable defaults.
+variable "container_name" {
+  description = "Nombre del contenedor Blob."
+  default     = "<TU_CONTAINER>"
+}
+```
 
-    Change the value of the `default` attribute of `storage_account_name` and `container_name` input variables in `vars.tf` file.
+---
 
-    ```hcl
-    variable "storage_account_name" {
-      description = "The name of the storage account. Must be globally unique, length between 3 and 24 characters and contain numbers and lowercase letters only."
-      default     = "<YOUR_STORAGE_ACCOUNT_NAME>"
-    }
+### 5. Validar los cambios
 
-    variable "container_name" {
-      description = "The name of the Blob Storage container."
-      default     = "<YOUR_CONTAINER_NAME>"
-    }
-    ```
+Antes de aplicar la configuración, puedes previsualizar los cambios con:
 
-* Validate the changes.
+```bash
+terraform plan
+```
 
-  The `terraform plan` command lets you see what Terraform will do before actually making any changes.
+---
 
-  Run command:
+### 6. Aplicar los cambios
 
-  ```bash
-  terraform plan
-  ```
+Para crear la infraestructura:
 
-* Apply the changes.
+```bash
+terraform apply
+```
 
-  The `terraform apply` command lets you apply your configuration and it creates the infrastructure.
+---
 
-  Run command:
+### 7. Verificar en el portal de Azure
 
-  ```bash
-  terraform apply
-  ```
+Después de aplicar la configuración, en el portal de Azure deberías ver:
 
-* Test the changes.
+* El nuevo **Storage Account**.
+* El contenedor **Blob** creado dentro del Storage Account.
 
-  When the `terraform apply` command completes, use the Azure console, you should see:
-  
-  * The new Azure storage account.
+---
 
-  * The new Blob Storage container created in the Azure storage account.
+### 8. Eliminar los recursos
 
-* Clean up the resources created.
+Para destruir los recursos creados cuando ya no los necesites:
 
-  When you have finished, the `terraform destroy` command destroys the infrastructure you created.
-  
-  Run command:
-
-  ```bash
-  terraform destroy
-  ```
+```bash
+terraform destroy
+```
