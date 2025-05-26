@@ -1,6 +1,6 @@
 # Infraestructura Escalable y Alta Disponibilidad con Terraform en Azure
 
-Este repositorio contiene un archivo Terraform que crea un contenedor de **Blob Storage** en Microsoft Azure, aprovisionando toda la infraestructura necesaria.
+Este repositorio contiene un archivos Terraform que crea un proyecto en Microsoft Azure, aprovisionando toda la infraestructura necesaria.
 
 ## 📚 Documentación
 
